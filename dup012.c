@@ -13,9 +13,12 @@ int main(int argc, char* argv[])
 	}
 
 	//dup(0);
-	dup2(fd, STDIN_FILENO);
-	int a;
-	scanf("%d", &a);
+	//dup2(fd, STDIN_FILENO);
+	//int a;
+	//scanf("%d", &a);
+
+	// 先复制一个fd指向tty用于后面恢复
+	int ttyfd = dup(STDOUT_FILENO);
 
 	// 把标准输出重定向到dup.txt上
 	// 它实际上是让STDOUT_FILENO（即文件描述符1）指向fd所指向的文件表项
@@ -27,6 +30,10 @@ int main(int argc, char* argv[])
 	dup2(fd, STDOUT_FILENO);
 	printf("instead of displaying in tty, out to the file\n");
 
+	// 恢复标准输出
+	dup2(ttyfd, STDOUT_FILENO);
+	printf("out to tty againt\n");
+	
 	close(fd);
 
 	return 0;

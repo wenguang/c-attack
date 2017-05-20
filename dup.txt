@@ -1,1 +1,0 @@
-instead of displaying in tty, out to the file
