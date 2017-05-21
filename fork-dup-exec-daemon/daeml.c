@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <stdlib.h>
 
 int main(int argc, char* argv[])
 {
@@ -70,7 +71,6 @@ int main(int argc, char* argv[])
 	{
 		close(fd++);
 	}
-	//dup(0);dup(0);
 	// 这个步骤会把STDOUT_FILENO也关闭掉，所以下面就不要下面的输出了
 	//printf("6 关闭不再需要的FD，这样让守护进程不再持有从父进程继承来的FD\n\n\n");
 
@@ -82,6 +82,7 @@ int main(int argc, char* argv[])
 	//printf("- 启动 %s 作为守护进程......\n\n\n", argv[1]);
 	execv(argv[1], argv + 1);
 
+	exit(0);
 	//printf("! 启动守护进程失败\n\n\n");
 
 

@@ -1,6 +1,0 @@
-
------------  (null)  -----------
-
-- daemon print message line 0
-- daemon print message line 1
-- daemon print message line 2
