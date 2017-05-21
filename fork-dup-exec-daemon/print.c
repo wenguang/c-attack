@@ -5,7 +5,7 @@
 
 int main()
 {
-	int fd = open("print.txt", O_CREAT | O_RDWR | O_TRUNC);
+	int fd = open("print.txt", O_CREAT | O_RDWR | O_APPEND);
 	if (fd == -1)
 	{
 		printf("! open failed.\n");

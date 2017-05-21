@@ -48,12 +48,14 @@ int main(int argc, char* argv[])
 	printf("3 fork 子进程，再脱离会话进程组长的角色，这就禁止了进程重新打开tty，因为只以会话进程组长才能重新打开tty\n\n\n");
 
 	// 4 设置进程的当前工作目录为根目录，防止工作目录被删除
-	// if (chdir("/") == -1)
-	// {
-	// 	printf("! chdir() failed.\n\n\n");
-	// 	return -1;
-	// }
-	//printf("5 设置进程的当前工作目录为根目录\n\n\n");
+	// ！！！调用了chdir不能成功启动守护进程，注释掉就可以了，以root权限调用也不行
+	/*if (chdir("/") == -1)
+	{
+		printf("! chdir() failed.\n\n\n");
+		return -1;
+	}
+	printf("4 设置进程的当前工作目录为根目录\n\n\n");
+	*/	
 
 	// 5 重设创建文件时权限屏蔽码
 	umask(0);
