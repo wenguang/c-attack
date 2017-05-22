@@ -11,7 +11,7 @@ int main()
         sysconf(_SC_NPROCESSORS_ONLN));
     printf ("The pagesize: %ld\n", sysconf(_SC_PAGESIZE));  
     printf ("The number of pages: %ld\n", sysconf(_SC_PHYS_PAGES));  
-    printf ("The number of available pages: %ld\n", sysconf(_SC_AVPHYS_PAGES)); 
+    //printf ("The number of available pages: %ld\n", sysconf(_SC_AVPHYS_PAGES)); // _SC_AVPHYS_PAGES 在mac上找不到定义
     printf ("The memory size: %lld MB\n", 
         (long long)sysconf(_SC_PAGESIZE) * (long long)sysconf(_SC_PHYS_PAGES) / ONE_MB );  
     printf ("The number of files max opened:: %ld\n", sysconf(_SC_OPEN_MAX));  
