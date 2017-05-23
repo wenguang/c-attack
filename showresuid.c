@@ -7,10 +7,13 @@ int main (void)
 #ifdef __linux__
 	uid_t ruid, euid, suid;
 
+	getresuid(&ruid, &euid, &suid);
+	printf("before setuid()\ncurrent process 3 uid :\nreal uid = %d\neffective uid = %d\nsaved uid = %d\n", ruid, euid, suid);
+
 	setuid(501);
 	// mac没有getresuid函数定义
 	getresuid(&ruid, &euid, &suid);
-	printf("current process 3 uid :\nreal uid = %d\neffective uid = %d\nsaved uid = %d\n", ruid, euid, suid);
+	printf("after setuid()\ncurrent process 3 uid :\nreal uid = %d\neffective uid = %d\nsaved uid = %d\n", ruid, euid, suid);
 #endif
 	return 0;
 }
