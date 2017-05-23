@@ -1,11 +1,11 @@
 
 cc = gcc
-objs = imserver.o errstr.o
-exe = imserver
+objs = server.o errstr.o
+exe = server
 
 $(exe): $(objs)
 	$(cc) $(objs) -o $(@)
-imserver.o: imserver.c
+imserver.o: server.c
 	$(cc) -c $< -o $@
 errstr.o: errstr.c
 	$(cc) -c $< -o $@
