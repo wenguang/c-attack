@@ -54,8 +54,8 @@ int main(int argc, char* argv[])
 	memset(&sockaddr, 0, (size_t)sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_port = htons(SERVER_PORT);
-	//sockaddr.sin_addr.s_addr = inet_addr("192.168.1.104");//htonl(INADDR_ANY);
-	sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	sockaddr.sin_addr.s_addr = inet_addr("192.168.1.104");//htonl(INADDR_ANY);
+	//sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	
 	if (connect(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
 	{
