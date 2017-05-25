@@ -1,118 +1,87 @@
 #include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <sys/stat.h>
 #include <signal.h>
-
-/* closeall() -- close all FDs >= a specified value */
-
-void closeall(int fd)
-{
-	int fdlimit = sysconf(_SC_OPEN_MAX);
-
-	while (fd < fdlimit)
-		close(fd++);
-}
-
-
-/* daemon() - detach process from user and disappear into the background
-* returns -1 on failure, but you can't do much except exit in that case
-* since we may already have forked. This is based on the BSD version,
-* so the caller is responsible for things like the umask, etc.
-*/
-     
-int daemon2(int nochdir, int noclose, int asroot)
-{
-	switch (fork())
-	{
-		case 0:  break;
-		case -1: return -1;
-		default: _exit(0);          /* exit the original process */
-	}
-
-	if (setsid() < 0)               /* shoudn't fail */
-		return -1;
-
-	if ( !asroot && (setuid(1) < 0) )              /* shoudn't fail */
-		return -1;
-
-	/* dyke out this switch if you want to acquire a control tty in */
-	/* the future -- not normally advisable for daemons */
-
-	switch (fork())
-	{
-		case 0:  break;
-		case -1: return -1;
-		default: _exit(0);
-	}
-
-	if (!nochdir)
-		chdir("/");
-
-	if (!noclose)
-	{
-		closeall(0);
-		dup(0); dup(0);
-	}
-
-	return 0;
-}
-
-#define TEXT(a) a
-void PrintUsage(char* name)
-{
-	printf (
-		TEXT("\n ----- \n\n")
-		TEXT("Usage:\n")
-		TEXT("   	%s program_name \n\n")
-		TEXT("Where:\n")
-		TEXT("   	%s - Name of this Daemon loader.\n")
-		TEXT("   	program_name - Name (including path) of the program you want to load as daemon.\n\n")
-		TEXT("Example:\n")
-		TEXT("   	%s ./atprcmgr - Launch program 'atprcmgr' in current directory as daemon. \n\n\n\n"),
-		name, name, name
-		);
-}
 
 int main(int argc, char* argv[])
 {
-	printf(
-		TEXT("\n")
-		TEXT("Daemon loader\n")
-		TEXT("- Launch specified program as daemon.\n")
-		//TEXT("- Require root privilege to launch successfully.\n\n\n") 
-		);
-
-	int i = 0;
-	for (i = 0; i < argc; ++i)
-	{
-		printf("- argv[%d] = %s\n", i, argv[i]);
-	}
-    
 	if (argc < 2)
 	{
-		printf("* Missing parameter : daemon program name not specified!\n");
-		PrintUsage(argv[0]);
-		exit(0);
+		printf("! 缺少参数，没有指定daemon程序名字\n");
+		return -1;
 	}
+	printf("\n");
 
-	printf("- Loading %s as daemon, please wait ......\n\n\n", argv[1]);
-
-	if (daemon2(1, 0, 1) >= 0)
+	// 1 fork 子进程，让父进程退出，确保可以创建新会话，因为只有非会话进程组长才能创建新会话
+	switch(fork())
 	{
-		signal(SIGCHLD, SIG_IGN);
-
-		//execl(argv[1], argv[1], NULL);
-		execv(argv[1], argv + 1);
-		printf("! Excute daemon programm %s failed. \n", argv[1]); 
-
-		exit(0);
+		case -1 : return -1;
+		case 0  : break;
+		default : _exit(0);
 	}
+	printf("1 fork 子进程，让父进程退出，确保可以创建新会话，因为只有非会话进程组长才能创建新会话\n\n\n");
 
-	printf("! Create daemon error. Please check if you have 'root' privilege. \n");
+	// 2 创建新会话，从父进程的所在会话的tty，这里子进程变成了新会话进程组长
+	if (setsid() == -1)
+	{
+		printf("! setsid() failed.\n");
+		return -1;
+	}
+	printf("2 创建新会话，从父进程的所在会话的tty，这里子进程变成了新会话进程组长\n\n\n");
+	//while(1)
+	//	printf("00000\n");
+	// 若在这句就return掉，且关掉tty，还是会在活动进程中看到a.out，就说明了第2步后进程就脱离了tty的控制
+
+	// if (setuid(1) < 0)
+	// {
+	// 	printf("! setuid failed.\n");
+	// 	return -1;	
+	// }
+	
+	// 3 fork 子进程，再脱离会话进程组长的角色，这就禁止了进程重新打开tty，因为只以会话进程组长才能重新打开tty，这步不是必须的
+	switch(fork())
+	{
+		case -1 : return -1;
+		case 0  : break;
+		default : _exit(0);
+	}
+	printf("3 fork 子进程，再脱离会话进程组长的角色，这就禁止了进程重新打开tty，因为只以会话进程组长才能重新打开tty\n\n\n");
+
+	// 4 设置进程的当前工作目录为根目录，防止工作目录被删除
+	// if (chdir("/") == -1)
+	// {
+	// 	printf("! chdir() failed.\n\n\n");
+	// 	return -1;
+	// }
+	//printf("5 设置进程的当前工作目录为根目录\n\n\n");
+
+	// 5 重设创建文件时权限屏蔽码
+	umask(0);
+	printf("5 重设创建文件时权限屏蔽码\n\n\n");
+
+	printf("- 启动 %s 作为守护进程......\n\n\n", argv[1]);
+
+	// 6 关闭不再需要的FD，这样让守护进程不再持有从父进程继承来的FD
+	int limit = sysconf(_SC_OPEN_MAX);
+	int fd = 0;
+	while(fd < limit)
+	{
+		close(fd++);
+	}
+	//dup(0);dup(0);
+	// 这个步骤会把STDOUT_FILENO也关闭掉，所以下面就不要下面的输出了
+	//printf("6 关闭不再需要的FD，这样让守护进程不再持有从父进程继承来的FD\n\n\n");
+
+	// 7、忽略子进程的结束信号，让内核处理，避免僵尸进程浪费系统资源
+	signal(SIGCHLD, SIG_IGN);
+	//printf("7、忽略子进程的结束信号，让内核处理，避免僵尸进程浪费系统资源\n\n\n");
+
+	// 8、调用新程序代换当前进程程序，exec并不创建新进程，调用成功后，后面的语句就不会执行
+	//printf("- 启动 %s 作为守护进程......\n\n\n", argv[1]);
+	execv(argv[1], argv + 1);
+
+	//printf("! 启动守护进程失败\n\n\n");
+
+
 	return 0;
 }
-
-
