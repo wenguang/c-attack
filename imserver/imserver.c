@@ -12,25 +12,24 @@
 
 int servsock(int port)
 {
-	char *err;
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd < 0)
-        {
-		errstr(&err);
-                printf("! servsock()-socket() failed, errno: %s.\n", *err);		
-                return -1;
-        }
+    if (sockfd < 0)
+    {
+        printf("! servsock()-socket() failed.\n");
+        printerr();	
+        return -1;
+    }
 
-        int reuseOn = 1;
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseOn, sizeof(reuseOn)) < 0)
-        {
-                close(sockfd);
-		errstr(&err);
-                printf("! servsock()-setsockopt() failed, errno: %s.\n", *err);
-                return -1;
-        }
+    int reuseOn = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseOn, sizeof(reuseOn)) < 0)
+    {
+        close(sockfd);
+        printf("! servsock()-setsockopt() failed.\n");
+        printerr();
+        return -1;
+    }
 
-        signal(SIGPIPE, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
 	/*
 	int nosigpipe = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &nosigpipe, sizeof(nosigpipe)) < 0)
@@ -50,17 +49,16 @@ int servsock(int port)
 	if (bind(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
 	{
 		close(sockfd);
-		errstr(&err);
-		printf("! servsock()-bind() failed, errno: %s.\n", *err);
+		printf("! servsock()-bind() failed.\n");
+		printerr();
 		return -1;
 	}
 
 	if (listen(sockfd, 1024) < 0)
 	{
 		close(sockfd);
-		errstr(&err);
 		printf("! servsock()-listen() failed.\n");
-		printf("! %s\n", errstr());
+		printerr();
 		return -1;
 	}
 
@@ -77,5 +75,5 @@ int main(int argc, char* argv[])
 
 	close(sockfd);
 	
-        return 0;
+    return 0;
 }
