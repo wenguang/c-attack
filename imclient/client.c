@@ -18,6 +18,7 @@
 
 #define SERVER_PORT 9001
 
+
 int main(int argc, char* argv[])
 {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -36,7 +37,17 @@ int main(int argc, char* argv[])
     		printerr();
     		exit(-1);
 	}
-
+	/*
+	int flags = fcntl(sockfd, F_GETFL);
+	flags |= O_NONBLOCK;
+	if (fcntl(sockfd, F_SETFL, flags) < 0)
+	{
+		close(sockfd);
+		printf("! fcntl() failed.\n");
+		printerr();
+		exit(-1);
+	}	
+	*/
 	signal(SIGPIPE, SIG_IGN);
 	
 	struct sockaddr_in sockaddr;
