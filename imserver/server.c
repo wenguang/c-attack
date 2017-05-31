@@ -18,7 +18,7 @@
 int sockfd, epfd;
 struct epoll_event *events;
 
-int getaddr(struct sockaddr *sa)
+int getaddr(struct sockaddr_in *sa)
 {
     struct ifaddrs *addrs;
     const struct ifaddrs *cursor;
@@ -67,20 +67,19 @@ int servsock(int port)
 
     	signal(SIGPIPE, SIG_IGN);
 	
-	/*
+	
 	struct sockaddr_in addr4;
+	/*
 	memset(&addr4, 0, (size_t)sizeof(addr4));
 	addr4.sin_family = AF_INET;
 	addr4.sin_port = htons(port);
 	addr4.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
 	*/
 
-	struct sockaddr sa;
-	getaddr(&sa);
-	sa.sin_port = htons(port);
+	getaddr(&addr4);
+	addr4.sin_port = htons(port);
 
-	//if (bind(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
-	if (bind(sockfd, &sa, (socklen_t)sizeof(sa)) < 0)
+	if (bind(sockfd, (struct sockaddr *)&addr4, (socklen_t)sizeof(addr4)) < 0)
 	{
 		close(sockfd);
 		printf("! servsock()-bind() failed.\n");
