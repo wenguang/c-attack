@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include <ifaddrs.h>
+#include <fcntl.h>
 
 #include "errstr.h"
 
@@ -149,8 +150,27 @@ void clean()
 	close(sockfd);
 }
 
+void stdout_to_file()
+{
+	int fd = open("server.out", O_CREAT | O_RDWR | O_APPEND);
+	if (fd == -1)
+	{
+		printf("! open failed.\n");
+		return;
+	}
+	if (dup2(fd, STDOUT_FILENO) == -1)
+	{
+		printf("! dup2 failed.\n");
+		return;
+	}
+}
+
 int main(int argc, char* argv[])
 {
+	//stdout_to_file();
+
+	printf("\n-------------------  server  -------------------\n\n");	
+
 	if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
 	{
 		printf("! epoll_create() failed.\n");
