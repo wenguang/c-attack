@@ -24,11 +24,12 @@ int getaddr(struct sockaddr *sa)
     while(cursor)
     {
         char* enp0s3 = "enp0s3";
-        if (cursor->ifa_addr->sa_family == AF_INET && memcmp(cursor->ifa_name, &enp0s3, (size_t)sizeof(enp0s3)) == 0)
+        if (cursor->ifa_addr->sa_family == AF_INET && strcmp(cursor->ifa_name, enp0s3) == 0)
         {
             memcpy(sa, cursor->ifa_addr, (size_t)sizeof(sa));
-            sa->sin_port = htons(9001);
-            break;
+            // sa->sin_port = htons(9001);
+            printf("- %s\n", cursor->ifa_name);
+	    break;
         }
         cursor = cursor->ifa_next;
     }
