@@ -4,58 +4,66 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <ifaddrs.h>
+#include <string.h>
 #include <netinet/in.h>
 
 //enp0s3
 
 int getaddr(struct sockaddr *sa)
 {
-	struct ifaddrs *addrs;
-        const struct ifaddrs *cursor;
-        struct sockaddr sockaddr;
+    struct ifaddrs *addrs;
+    const struct ifaddrs *cursor;
+    
+    if (getifaddrs(&addrs) < 0)
+    {
+        printf("! getifaddrs() failed.\n");
+        exit(-1);
+    }
 
-        if (getifaddrs(&addrs) < 0)
+    cursor = addrs;
+    while(cursor)
+    {
+        char* enp0s3 = "enp0s3";
+        if (cursor->ifa_addr->sa_family == AF_INET && memcmp(cursor->ifa_name, &enp0s3, (size_t)sizeof(enp0s3)) == 0)
         {
-                printf("! getifaddrs() failed.\n");
-                exit(-1);
+            memcpy(sa, cursor->ifa_addr, (size_t)sizeof(sa));
+            sa->sin_port = htons(9001);
+            break;
         }
+        cursor = cursor->ifa_next;
+    }
+    
+    free(addrs);
 
-        cursor = addrs;
-        while(cursor)
-        {
-                //memcpy(&sockaddr, cursor->ifa_addr, (size_t)sizeof(sockaddr));
-                //                //printf("- %s\n", cursor->ifa_name);
-                //                                if (cursor->ifa_addr->sa_family == AF_INET)
-                //                                                        printf("- %s\n", cursor->ifa_name);
-                //                                                                        cursor = cursor->ifa_next;
-                //                                                                                }
-                //
-                //                                                                                        free(addrs);	
 }
 
 int main(int argc, char* argv[])
 {
-	struct ifaddrs *addrs;
-	const struct ifaddrs *cursor;
-	struct sockaddr sockaddr;
-	
-	if (getifaddrs(&addrs) < 0)
-	{
-		printf("! getifaddrs() failed.\n");
-		exit(-1);
-	}
 
-	cursor = addrs;
-        while(cursor)
-        {
-		//memcpy(&sockaddr, cursor->ifa_addr, (size_t)sizeof(sockaddr));
-        	//printf("- %s\n", cursor->ifa_name);
-		if (cursor->ifa_addr->sa_family == AF_INET)
-			printf("- %s\n", cursor->ifa_name);
-      		cursor = cursor->ifa_next;
-	}
+    struct sockaddr sa;
+    getaddr(&sa);
+
+	// struct ifaddrs *addrs;
+	// const struct ifaddrs *cursor;
+	// struct sockaddr sockaddr;
 	
-	free(addrs);
+	// if (getifaddrs(&addrs) < 0)
+	// {
+	// 	printf("! getifaddrs() failed.\n");
+	// 	exit(-1);
+	// }
+
+	// cursor = addrs;
+ //        while(cursor)
+ //        {
+	// 	//memcpy(&sockaddr, cursor->ifa_addr, (size_t)sizeof(sockaddr));
+ //        	//printf("- %s\n", cursor->ifa_name);
+	// 	if (cursor->ifa_addr->sa_family == AF_INET)
+	// 		printf("- %s\n", cursor->ifa_name);
+ //      		cursor = cursor->ifa_next;
+	// }
+	
+	// free(addrs);
 
 	return 0;
 }
