@@ -77,7 +77,7 @@ int servsock(int port)
 
 	struct sockaddr sa;
 	getaddr(&sa);
-	addr4.sin_port = htons(port);
+	sa.sin_port = htons(port);
 
 	//if (bind(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
 	if (bind(sockfd, &sa, (socklen_t)sizeof(sa)) < 0)
