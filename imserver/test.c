@@ -6,10 +6,22 @@
 #include <ifaddrs.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <cstring>
 #include <map>
+#include <iterator>
+#include <queue>
+#include <vector>
+#include <stdint.h>
+#include <string>
+
+struct stu
+{
+	int in;
+	struct sockaddr addr;
+};
 
 int main(int argc, char* argv[])
 {
-    Map<int, string> mapSt;
+	std::map<int, stu> mapSt; 
 	return 0;
 }
