@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/epoll.h>
+#include <ifaddrs.h>
 
 #include "errstr.h"
 
