@@ -17,6 +17,34 @@
 int sockfd, epfd;
 struct epoll_event *events;
 
+int getaddr(struct sockaddr *sa)
+{
+    struct ifaddrs *addrs;
+    const struct ifaddrs *cursor;
+    
+    if (getifaddrs(&addrs) < 0)
+    {
+        printf("! getifaddrs() failed.\n");
+        exit(-1);
+    }
+
+    cursor = addrs;
+    while(cursor)
+    {
+        char* enp0s3 = "enp0s3";
+        if (cursor->ifa_addr->sa_family == AF_INET && strcmp(cursor->ifa_name, enp0s3) == 0)
+        {
+            memcpy(sa, cursor->ifa_addr, (size_t)sizeof(sa));
+            printf("- %s\n", cursor->ifa_name);
+	    break;
+        }
+        cursor = cursor->ifa_next;
+    }
+    
+    free(addrs);
+
+}
+
 int servsock(int port)
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -37,23 +65,21 @@ int servsock(int port)
     	}
 
     	signal(SIGPIPE, SIG_IGN);
-	/*
-	int nosigpipe = 1;
-	if (setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &nosigpipe, sizeof(nosigpipe)) < 0)
-	{
-		close(sockfd);
-		printf("! setsockopt() nosigpipe failed.\n");
-		return -1;
-	}
-	*/
 	
-	struct sockaddr_in sockaddr;
-	memset(&sockaddr, 0, (size_t)sizeof(sockaddr));
-	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_port = htons(port);
-	sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
+	/*
+	struct sockaddr_in addr4;
+	memset(&addr4, 0, (size_t)sizeof(addr4));
+	addr4.sin_family = AF_INET;
+	addr4.sin_port = htons(port);
+	addr4.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
+	*/
 
-	if (bind(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
+	struct sockaddr sa;
+	getaddr(&sa);
+	addr4.sin_port = htons(port);
+
+	//if (bind(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
+	if (bind(sockfd, &sa, (socklen_t)sizeof(sa)) < 0)
 	{
 		close(sockfd);
 		printf("! servsock()-bind() failed.\n");

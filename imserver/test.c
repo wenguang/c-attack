@@ -7,8 +7,6 @@
 #include <string.h>
 #include <netinet/in.h>
 
-//enp0s3
-
 int getaddr(struct sockaddr *sa)
 {
     struct ifaddrs *addrs;
@@ -27,7 +25,6 @@ int getaddr(struct sockaddr *sa)
         if (cursor->ifa_addr->sa_family == AF_INET && strcmp(cursor->ifa_name, enp0s3) == 0)
         {
             memcpy(sa, cursor->ifa_addr, (size_t)sizeof(sa));
-            // sa->sin_port = htons(9001);
             printf("- %s\n", cursor->ifa_name);
 	    break;
         }
