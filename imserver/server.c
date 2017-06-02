@@ -103,8 +103,8 @@ int accept_connd()
 {
 	int csockfd;
 	struct sockaddr addr;
-	socklen_t socklen sizeof(addr);
-	if ((csockfd = accept(psockfd, &addr, &socklen)) < 0)
+	socklen_t addrlen = sizeof(addr);
+	if ((csockfd = accept(psockfd, &addr, &addrlen)) < 0)
 	{
 		printf("! accept_connd()-accept() failed.\n");
 		printerr();
