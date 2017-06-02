@@ -16,7 +16,7 @@
 #define LISTEN_PORT 9001
 #define EPOLL_SIZE  1024
 
-int sockfd, epfd;
+int psockfd, epfd;
 struct epoll_event *events;
 
 int getaddr(struct sockaddr_in *sa)
@@ -49,8 +49,8 @@ int getaddr(struct sockaddr_in *sa)
 
 int servsock(int port)
 {
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-   	if (sockfd < 0)
+	psockfd = socket(AF_INET, SOCK_STREAM, 0);
+   	if (psockfd < 0)
     	{
         	printf("! servsock()-socket() failed.\n");
        	 	printerr();	
@@ -58,9 +58,9 @@ int servsock(int port)
     	}
 
     	int reuseOn = 1;
-    	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuseOn, sizeof(reuseOn)) < 0)
+    	if (setsockopt(psockfd, SOL_SOCKET, SO_REUSEADDR, &reuseOn, sizeof(reuseOn)) < 0)
     	{
-        	close(sockfd);
+        	close(psockfd);
         	printf("! servsock()-setsockopt() failed.\n");
         	printerr();
         	return -1;
@@ -80,23 +80,54 @@ int servsock(int port)
 	getaddr(&addr4);
 	addr4.sin_port = htons(port);
 
-	if (bind(sockfd, (struct sockaddr *)&addr4, (socklen_t)sizeof(addr4)) < 0)
+	if (bind(psockfd, (struct sockaddr *)&addr4, (socklen_t)sizeof(addr4)) < 0)
 	{
-		close(sockfd);
+		close(psockfd);
 		printf("! servsock()-bind() failed.\n");
 		printerr();
 		return -1;
 	}
 
-	if (listen(sockfd, 1024) < 0)
+	if (listen(psockfd, 1024) < 0)
 	{
-		close(sockfd);
+		close(psockfd);
 		printf("! servsock()-listen() failed.\n");
 		printerr();
 		return -1;
 	}
 
-	return sockfd;
+	return psockfd;
+}
+
+int accept_connd()
+{
+	int csockfd;
+	struct sockaddr addr;
+	if ((csockfd = accept(psockfd, &addr, (socklen_t)sizeof(addr))) < 0)
+	{
+		printf("! accept_connd()-accept() failed.\n");
+		printerr();
+		return -1;
+	}
+
+	int flags;
+	if ((flags = fcntl(csockfd, F_GETFL)) < 0)
+	{
+		printf("! accept_connd()-fcntl() get failed.\n");
+		printerr();
+		return -1;
+	}
+	flags |= O_NONBLOCK;
+	if (fcntl(csockfd, F_SETFL, flags) < 0)
+	{
+		printf("! accept_connd()-fcntl() set failed.\n");
+		printerr();
+		return -1;	
+	}
+
+	printf("- new connd accepted.\n");
+
+	return csockfd;
 }
 
 int add_to_epoll(int fd)
@@ -147,7 +178,7 @@ void clean()
 {
 	free(events);
 	close(epfd);
-	close(sockfd);
+	close(psockfd);
 }
 
 void stdout_to_file()
@@ -178,12 +209,12 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
-	if ((sockfd = servsock(LISTEN_PORT)) < 0)
+	if ((psockfd = servsock(LISTEN_PORT)) < 0)
 	{
 		exit(-1);
 	}
 
-	if (add_to_epoll(sockfd) < 0)
+	if (add_to_epoll(psockfd) < 0)
 	{
 		exit(-1);
 	}
@@ -198,9 +229,21 @@ int main(int argc, char* argv[])
 		{
 			printf("- epoll_wait() return %d events.\n", nfds);
 			int i;
-			for (i=0; i<nfds; i++)
+			for (i = 0; i < nfds; i++)
 			{
-				
+				event = events[i];
+				if (event.data.fd == psockfd)
+				{
+					int chldsockfd = accept_connd();
+					if (chldsockfd)
+					{
+						add_to_epoll(chldsockfd);
+					}
+				}
+				else
+				{
+
+				}
 			}
 		}
 		else
