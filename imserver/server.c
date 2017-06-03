@@ -10,14 +10,56 @@
 #include <sys/epoll.h>
 #include <ifaddrs.h>
 #include <fcntl.h>
+#include <map>
+#include <iterator>
+
+#ifdef __APPLE__
+#include <arpa/inet.h>
+#endif
 
 #include "errstr.h"
 
 #define LISTEN_PORT 9001
 #define EPOLL_SIZE  1024
 
-int psockfd, epfd;
-struct epoll_event *events;
+struct sockconn
+{
+	int sockfd;
+	struct sockaddr *addr;
+};
+
+typedef std::map<int, sockconn> mapconn_t;
+
+static mapconn_t map_conn;
+
+static int psockfd, epfd;
+static struct epoll_event *events;
+
+void add_map_conn(int sockfd, struct sockaddr *addr)
+{
+	mapconn_t::iterator it = map_conn.find(sockfd);
+	if (it == map_conn.end())
+	{
+		struct sockconn conn;
+		conn.sockfd = sockfd;
+		conn.addr = addr;
+		map_conn[sockfd] = conn;
+
+		printf("- new conn added to map.\n");
+	}
+	printf("! conn already in map.\n");
+}
+
+void del_map_conn(int sockfd)
+{
+	mapconn_t::iterator it = map_conn.find(sockfd);
+	if (it != map_conn.end())
+	{
+		map_conn.erase(it);
+		printf("- conn del from map.\n");
+	}
+	printf("! not such conn in map.\n");
+}
 
 int getaddr(struct sockaddr_in *sa)
 {
@@ -99,12 +141,12 @@ int servsock(int port)
 	return psockfd;
 }
 
-int accept_connd()
+int accept_connd(struct sockaddr *addr)
 {
 	int csockfd;
-	struct sockaddr addr;
-	socklen_t addrlen = sizeof(addr);
-	if ((csockfd = accept(psockfd, &addr, &addrlen)) < 0)
+	//struct sockaddr addr;
+	socklen_t addrlen = sizeof(*addr);
+	if ((csockfd = accept(psockfd, addr, &addrlen)) < 0)
 	{
 		printf("! accept_connd()-accept() failed.\n");
 		printerr();
@@ -235,15 +277,17 @@ int main(int argc, char* argv[])
 				event = events[i];
 				if (event.data.fd == psockfd)
 				{
-					int chldsockfd = accept_connd();
+					struct sockaddr addr;
+					int chldsockfd = accept_connd(&addr);
 					if (chldsockfd)
 					{
+						add_map_conn(chldsockfd, &addr);
 						add_to_epoll(chldsockfd);
 					}
 				}
 				else
 				{
-
+					
 				}
 			}
 		}
