@@ -17,9 +17,9 @@
 #include <map>
 #include <iterator>
 
-#ifdef __APPLE__
+//#ifdef __APPLE__
 #include <arpa/inet.h>
-#endif
+//#endif
 
 struct conn
 {
@@ -37,12 +37,8 @@ int main(int argc, char* argv[])
 	{
 		struct sockaddr_in addrin;
 		addrin.sin_family = AF_INET;
-#ifdef __APPLE__
-		addrin.sin_addr.s_addr = inet_addr("loopback");
-#elif __linux__
-		addrin.sin_addr.s_addr = inet_pton("loopback");
-#endif
 		addrin.sin_port = htons(1000 + i);
+		inet_pton(AF_INET, "127.0.0.1", &addrin.sin_addr);
 
 		struct conn cnn;
 		cnn.sockfd = i;
