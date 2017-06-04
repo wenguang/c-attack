@@ -1,2 +1,2 @@
 
-char* errstr();
+void printerr();

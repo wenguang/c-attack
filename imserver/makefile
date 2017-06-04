@@ -5,9 +5,9 @@ exe = server
 
 $(exe): $(objs)
 	$(cc) $(objs) -o $(@)
-imserver.o: server.c
+imserver.o: server.cpp
 	$(cc) -c $< -o $@
-errstr.o: errstr.c
+errstr.o: errstr.cpp
 	$(cc) -c $< -o $@
 
 #.PHONY clean

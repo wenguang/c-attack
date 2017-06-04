@@ -5,9 +5,9 @@ exe = client
 
 $(exe): $(objs)
 	$(cc) $(objs) -o $@
-client.o: client.c
+client.o: client.cpp
 	 $(cc) -c $< -o $@
-errstr.o: errstr.c
+errstr.o: errstr.cpp
 	$(cc) -c $< -o $@
 
 clean:
