@@ -1,5 +1,5 @@
 
-cc = gcc
+cc = g++
 objs = server.o errstr.o
 exe = server
 

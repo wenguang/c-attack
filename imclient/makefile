@@ -1,4 +1,4 @@
-cc = gcc
+cc = g++
 
 objs = client.o errstr.o
 exe = client

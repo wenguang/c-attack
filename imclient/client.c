@@ -8,11 +8,7 @@
 #include <signal.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-
-#ifdef __APPLE__
 #include <arpa/inet.h>
-#endif
-
 
 #include "errstr.h"
 
@@ -21,6 +17,8 @@
 
 int main(int argc, char* argv[])
 {
+	signal(SIGPIPE, SIG_IGN);
+
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
    	if (sockfd < 0)
 	{
@@ -37,25 +35,12 @@ int main(int argc, char* argv[])
     		printerr();
     		exit(-1);
 	}
-	/*
-	int flags = fcntl(sockfd, F_GETFL);
-	flags |= O_NONBLOCK;
-	if (fcntl(sockfd, F_SETFL, flags) < 0)
-	{
-		close(sockfd);
-		printf("! fcntl() failed.\n");
-		printerr();
-		exit(-1);
-	}	
-	*/
-	signal(SIGPIPE, SIG_IGN);
 	
 	struct sockaddr_in sockaddr;
 	memset(&sockaddr, 0, (size_t)sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_port = htons(SERVER_PORT);
-	sockaddr.sin_addr.s_addr = inet_addr("192.168.1.104");//htonl(INADDR_ANY);
-	//sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	inet_pton(AF_INET, "192.168.1.104", &sockaddr.sin_addr);
 	
 	if (connect(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
 	{
@@ -65,6 +50,16 @@ int main(int argc, char* argv[])
     		exit(-1);
 	}
 	printf("- connected.\n");
+
+	int flags = fcntl(sockfd, F_GETFL);
+	flags |= O_NONBLOCK;
+	if (fcntl(sockfd, F_SETFL, flags) < 0)
+	{
+		close(sockfd);
+		printf("! fcntl() failed.\n");
+		printerr();
+		exit(-1);
+	}
 
 	while(1){}
 

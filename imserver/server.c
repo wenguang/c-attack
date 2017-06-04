@@ -12,10 +12,7 @@
 #include <fcntl.h>
 #include <map>
 #include <iterator>
-
-#ifdef __APPLE__
 #include <arpa/inet.h>
-#endif
 
 #include "errstr.h"
 
@@ -112,13 +109,7 @@ int servsock(int port)
 	
 	
 	struct sockaddr_in addr4;
-	/*
 	memset(&addr4, 0, (size_t)sizeof(addr4));
-	addr4.sin_family = AF_INET;
-	addr4.sin_port = htons(port);
-	addr4.sin_addr.s_addr = inet_addr("127.0.0.1");//htonl(INADDR_ANY);
-	*/
-
 	getaddr(&addr4);
 	addr4.sin_port = htons(port);
 
@@ -144,7 +135,6 @@ int servsock(int port)
 int accept_connd(struct sockaddr *addr)
 {
 	int csockfd;
-	//struct sockaddr addr;
 	socklen_t addrlen = sizeof(*addr);
 	if ((csockfd = accept(psockfd, addr, &addrlen)) < 0)
 	{
@@ -287,7 +277,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					
+
 				}
 			}
 		}

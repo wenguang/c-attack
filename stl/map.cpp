@@ -16,10 +16,7 @@
 #include <fcntl.h>
 #include <map>
 #include <iterator>
-
-//#ifdef __APPLE__
 #include <arpa/inet.h>
-//#endif
 
 struct conn
 {
