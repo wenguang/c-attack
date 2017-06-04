@@ -216,7 +216,17 @@ int del_from_epoll(int fd)
 
 int epoll_event_fire(struct epoll_event event)
 {
-	printf("- event type = %d\n", event.events);
+	//printf("- event type = %d\n", event.events);
+	if (event.events & EPOLLIN)
+		printf("- EPOLLIN\n");
+	if (event.events & EPOLLPRI)
+		printf("- EPOLLPRI\n");
+	if (event.events & EPOLLOUT)
+		printf("- EPOLLOUT\n");
+	if (event.events & EPOLLERR)
+		printf("- EPOLLERR\n");
+	if (event.events & EPOLLHUP)
+		printf("- EPOLLHUP\n");
 
 	if (event.data.fd == psockfd)
 	{
