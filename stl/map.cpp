@@ -37,7 +37,11 @@ int main(int argc, char* argv[])
 	{
 		struct sockaddr_in addrin;
 		addrin.sin_family = AF_INET;
+#ifdef __APPLE__
 		addrin.sin_addr.s_addr = inet_addr("loopback");
+#elif __linux__
+		addrin.sin_addr.s_addr = inet_pton("loopback");
+#endif
 		addrin.sin_port = htons(1000 + i);
 
 		struct conn cnn;
