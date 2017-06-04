@@ -43,8 +43,12 @@ void add_map_conn(int sockfd, struct sockaddr *addr)
 		map_conn[sockfd] = conn;
 
 		printf("- new conn added to map.\n");
+
 	}
-	printf("! conn already in map.\n");
+	else
+	{
+		printf("! conn already in map.\n");
+	}
 }
 
 void del_map_conn(int sockfd)
@@ -55,7 +59,10 @@ void del_map_conn(int sockfd)
 		map_conn.erase(it);
 		printf("- conn del from map.\n");
 	}
-	printf("! not such conn in map.\n");
+	else
+	{
+		printf("! not such conn in map.\n");
+	}
 }
 
 int getaddr(struct sockaddr_in *sa)
