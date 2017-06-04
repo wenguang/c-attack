@@ -202,7 +202,7 @@ int del_from_epoll(int fd)
 	
 	struct epoll_event event;
         event.data.fd = fd;
-        event.events = EPOLLIN | EPOLLERR | EPOLLET;
+        event.events = EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLET;
 
 	if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &event) < 0)
         {
@@ -212,6 +212,31 @@ int del_from_epoll(int fd)
         }
 
         return 0;
+}
+
+int epoll_event_fire(struct epoll_event event)
+{
+	printf("- event type = %d\n", event.events);
+
+	if (event.data.fd == psockfd)
+	{
+		if (event.events & EPOLLIN)
+		{
+			struct sockaddr addr;
+			int chldsockfd = accept_connd(&addr);
+			if (chldsockfd)
+			{
+				add_map_conn(chldsockfd, &addr);
+				add_to_epoll(chldsockfd);
+			}	
+		}
+	}
+	else
+	{
+
+	}
+
+	return 0;
 }
 
 void clean()
@@ -272,20 +297,7 @@ int main(int argc, char* argv[])
 			for (i = 0; i < nfds; i++)
 			{
 				event = events[i];
-				if (event.data.fd == psockfd)
-				{
-					struct sockaddr addr;
-					int chldsockfd = accept_connd(&addr);
-					if (chldsockfd)
-					{
-						add_map_conn(chldsockfd, &addr);
-						add_to_epoll(chldsockfd);
-					}
-				}
-				else
-				{
-
-				}
+				epoll_event_fire(event);
 			}
 		}
 		else
