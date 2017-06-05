@@ -248,7 +248,16 @@ int epoll_event_fire(struct epoll_event event)
 	}
 	else
 	{
-
+		int sockfd = event.data.fd;
+		if (event.events & EPOLLIN)
+		{
+			char *buf = (char *)calloc(2, sizeof(char));
+			if (read(sockfd, buf, 2) < 0)
+			{
+				printf("- read null.\n");
+				printerr();
+			}
+		}
 	}
 
 	return 0;
