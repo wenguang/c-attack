@@ -243,7 +243,7 @@ int epoll_event_fire(struct epoll_event event)
 					add_to_epoll(chldsockfd);
 				}
 			} 
-			while(chldsockfd > 0)
+			while(chldsockfd > 0);
 		}
 	}
 	else
