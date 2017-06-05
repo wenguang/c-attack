@@ -74,8 +74,8 @@ int main(int argc, char* argv[])
 		}
 	} 
 
-	//close(sockfd);
-	shutdown(sockfd, 2);
+	close(sockfd);
+	//shutdown(sockfd, 0);
 
 	while(1){}
 

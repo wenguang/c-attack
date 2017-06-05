@@ -232,13 +232,18 @@ int epoll_event_fire(struct epoll_event event)
 	{
 		if (event.events & EPOLLIN)
 		{
-			struct sockaddr addr;
-			int chldsockfd = accept_connd(&addr);
-			if (chldsockfd)
+			int chldsockfd;
+			do
 			{
-				add_map_conn(chldsockfd, &addr);
-				add_to_epoll(chldsockfd);
-			}	
+				struct sockaddr addr;
+				chldsockfd = accept_connd(&addr);
+				if (chldsockfd > 0)
+				{
+					add_map_conn(chldsockfd, &addr);
+					add_to_epoll(chldsockfd);
+				}
+			} 
+			while(chldsockfd > 0)
 		}
 	}
 	else
