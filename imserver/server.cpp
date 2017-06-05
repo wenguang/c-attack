@@ -216,7 +216,7 @@ int del_from_epoll(int fd)
 
 int epoll_event_fire(struct epoll_event event)
 {
-	//printf("- event type = %d\n", event.events);
+	printf("- event type = %d\n", event.events);
 	if (event.events & EPOLLIN)
 		printf("- EPOLLIN\n");
 	if (event.events & EPOLLPRI)
