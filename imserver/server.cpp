@@ -13,6 +13,8 @@
 #include <map>
 #include <iterator>
 #include <arpa/inet.h>
+//#include <linux/tcp.h>
+#include <netinet/tcp.h>
 
 #include "errstr.h"
 
@@ -65,7 +67,7 @@ void del_map_conn(int sockfd)
 	}
 }
 
-int getaddr(struct sockaddr_in *sa)
+int getifaddr(struct sockaddr_in *sa)
 {
     struct ifaddrs *addrs;
     const struct ifaddrs *cursor;
@@ -97,27 +99,39 @@ int servsock(int port)
 {
 	psockfd = socket(AF_INET, SOCK_STREAM, 0);
    	if (psockfd < 0)
-    	{
-        	printf("! servsock()-socket() failed.\n");
-       	 	printerr();	
-        	return -1;
-    	}
+	{
+    	printf("! servsock()-socket() failed.\n");
+   	 	printerr();	
+    	return -1;
+	}
 
-    	int reuseOn = 1;
-    	if (setsockopt(psockfd, SOL_SOCKET, SO_REUSEADDR, &reuseOn, sizeof(reuseOn)) < 0)
-    	{
-        	close(psockfd);
-        	printf("! servsock()-setsockopt() failed.\n");
-        	printerr();
-        	return -1;
-    	}
+	int reuseOn = 1;
+	if (setsockopt(psockfd, SOL_SOCKET, SO_REUSEADDR, &reuseOn, sizeof(reuseOn)) < 0)
+	{
+    	close(psockfd);
+    	printf("! servsock()-setsockopt() failed.\n");
+    	printerr();
+    	return -1;
+	}
 
-    	signal(SIGPIPE, SIG_IGN);
-	
+	int flags;
+	if ((flags = fcntl(psockfd, F_GETFL)) < 0)
+	{
+		printf("! servsock()-fcntl() get failed.\n");
+		printerr();
+		return -1;
+	}
+	flags |= O_NONBLOCK;
+	if (fcntl(psockfd, F_SETFL, flags) < 0)
+	{
+		printf("! servsock()-fcntl() set failed.\n");
+		printerr();
+		return -1;	
+	}
 	
 	struct sockaddr_in addr4;
 	memset(&addr4, 0, (size_t)sizeof(addr4));
-	getaddr(&addr4);
+	getifaddr(&addr4);
 	addr4.sin_port = htons(port);
 
 	if (bind(psockfd, (struct sockaddr *)&addr4, (socklen_t)sizeof(addr4)) < 0)
@@ -145,6 +159,12 @@ int accept_connd(struct sockaddr *addr)
 	socklen_t addrlen = sizeof(*addr);
 	if ((csockfd = accept(psockfd, addr, &addrlen)) < 0)
 	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+			// 已经没有在等待的连接了
+			return 0;
+		}
+
 		printf("! accept_connd()-accept() failed.\n");
 		printerr();
 		return -1;
@@ -165,14 +185,13 @@ int accept_connd(struct sockaddr *addr)
 		return -1;	
 	}
 
-	printf("- new connd accepted.\n");
+	printf("- new conn accepted, sockfd = %d.\n", csockfd);
 
 	return csockfd;
 }
 
 int add_to_epoll(int fd)
 {
-printf("start add_to_epoll\n");
 	if (epfd <= 0)
 	{
 		printf("! add_to_epoll() failed, epfd is null.\n");
@@ -190,34 +209,38 @@ printf("start add_to_epoll\n");
 		return -1;
 	}
 
+	printf("- sockfd %d add to epoll\n", fd);
+
 	return 0;
 }
 
-int del_from_epoll(int fd)
+int del_from_epoll(int sockfd)
 {
 	if (epfd <= 0)
-        {
-                printf("! del_from_epoll() failed, epfd is null.\n");
-                return -1;
-        }
+    {
+            printf("! del_from_epoll() failed, epfd is null.\n");
+            return -1;
+    }
 	
 	struct epoll_event event;
-        event.data.fd = fd;
+        event.data.fd = sockfd;
         event.events = EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLET;
 
-	if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &event) < 0)
-        {
-                printf("! del_from_epoll()-epoll_ctl() failed.\n");
-                printerr();
-                return -1;
-        }
+	if (epoll_ctl(epfd, EPOLL_CTL_DEL, sockfd, &event) < 0)
+    {
+            printf("! del_from_epoll()-epoll_ctl() failed.\n");
+            printerr();
+            return -1;
+    }
 
-        return 0;
+    printf("- sockfd %d del from epoll.\n", sockfd);
+
+    return 0;
 }
 
 int epoll_event_fire(struct epoll_event event)
 {
-	printf("- event type = %d\n", event.events);
+	//printf("- event type = %d\n", event.events);
 	if (event.events & EPOLLIN)
 		printf("- EPOLLIN\n");
 	if (event.events & EPOLLPRI)
@@ -234,19 +257,16 @@ int epoll_event_fire(struct epoll_event event)
 		if (event.events & EPOLLIN)
 		{
 			int chldsockfd;
-			//do
-			//{
+			do
+			{
 				struct sockaddr addr;
-				chldsockfd = accept_connd(&addr);
-				printf("- accept sockfd = %d\n", chldsockfd);
-				if (chldsockfd > 0)
+				if (chldsockfd = accept_connd(&addr))
 				{
 					add_map_conn(chldsockfd, &addr);
-					printf("return from add_map_conn\n");
 					add_to_epoll(chldsockfd);
 				}
-			// } 
-			// while(chldsockfd > 0);
+			} 
+			while(chldsockfd > 0);
 		}
 	}
 	else
@@ -254,12 +274,30 @@ int epoll_event_fire(struct epoll_event event)
 		int sockfd = event.data.fd;
 		if (event.events & EPOLLIN)
 		{
-			char *buf = (char *)calloc(2, sizeof(char));
-			if (read(sockfd, buf, 2) < 0)
+			struct tcp_info info;
+			int len = sizeof(info);
+			if (getsockopt(sockfd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&len) < 0)
 			{
-				printf("- read null.\n");
+				printf("! epoll_event_fire()-getsockopt() failed.\n");
 				printerr();
+				return -1;
 			}
+
+			if (info.tcpi_state != TCP_ESTABLISHED)
+			{
+				del_from_epoll(sockfd);
+				del_map_conn(sockfd);
+				close(sockfd);
+				printf("- sockfd %d closed.\n", sockfd);
+				return 0;
+			}
+
+			// char *buf = (char *)calloc(2, sizeof(char));
+			// if (read(sockfd, buf, 2) <= 0)
+			// {
+			// 	printf("- read null.\n");
+			// 	printerr();
+			// }
 		}
 	}
 
@@ -292,7 +330,9 @@ int main(int argc, char* argv[])
 {
 	//stdout_to_file();
 
-	printf("\n-------------------  server  -------------------\n\n");	
+	printf("\n-------------------  server  -------------------\n");	
+
+	signal(SIGPIPE, SIG_IGN);
 
 	if ((epfd = epoll_create(EPOLL_SIZE)) < 0)
 	{
@@ -319,7 +359,7 @@ int main(int argc, char* argv[])
 	{
 		if ((nfds = epoll_wait(epfd, events, EPOLL_SIZE, -1)) > 0)
 		{
-			printf("- epoll_wait() return %d events.\n", nfds);
+			//printf("- epoll_wait() return %d events.\n", nfds);
 			int i;
 			for (i = 0; i < nfds; i++)
 			{

@@ -59,23 +59,29 @@ int main(int argc, char* argv[])
 	flags |= O_NONBLOCK;
 	fcntl(sockfd, F_SETFL, flags);
 
+
 	char input;
-	while (input != 'q')
+	while (1)
 	{
 		scanf("%c", &input);
-		int n = write(sockfd, &input, sizeof(input));
-		if (n > 0)
+		if (input == 'q')
+			break;
+
+		char *msg = "hello world"
+		if (write(sockfd, &msg, sizeof(msg))
 		{
-			printf("- send %c\n", input);
+			printf("- send %s\n", msg);
 		}
 		else
 		{
-			printf("- send null\n");
+			printf("! send failed.\n");
 		}
 	} 
 
 	close(sockfd);
 	//shutdown(sockfd, 0);
+
+	printf("x call close.\n");
 
 	while(1){}
 
