@@ -237,6 +237,7 @@ int epoll_event_fire(struct epoll_event event)
 			{
 				struct sockaddr addr;
 				chldsockfd = accept_connd(&addr);
+				printf("- accept sockfd = %d\n", chldsockfd);
 				if (chldsockfd > 0)
 				{
 					add_map_conn(chldsockfd, &addr);
