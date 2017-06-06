@@ -172,6 +172,7 @@ int accept_connd(struct sockaddr *addr)
 
 int add_to_epoll(int fd)
 {
+printf("start add_to_epoll\n");
 	if (epfd <= 0)
 	{
 		printf("! add_to_epoll() failed, epfd is null.\n");
@@ -241,6 +242,7 @@ int epoll_event_fire(struct epoll_event event)
 				if (chldsockfd > 0)
 				{
 					add_map_conn(chldsockfd, &addr);
+					printf("return from add_map_conn\n");
 					add_to_epoll(chldsockfd);
 				}
 			// } 
