@@ -233,8 +233,8 @@ int epoll_event_fire(struct epoll_event event)
 		if (event.events & EPOLLIN)
 		{
 			int chldsockfd;
-			do
-			{
+			//do
+			//{
 				struct sockaddr addr;
 				chldsockfd = accept_connd(&addr);
 				printf("- accept sockfd = %d\n", chldsockfd);
@@ -243,8 +243,8 @@ int epoll_event_fire(struct epoll_event event)
 					add_map_conn(chldsockfd, &addr);
 					add_to_epoll(chldsockfd);
 				}
-			} 
-			while(chldsockfd > 0);
+			// } 
+			// while(chldsockfd > 0);
 		}
 	}
 	else
