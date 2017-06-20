@@ -170,6 +170,7 @@ int accept_connd(struct sockaddr *addr)
 		return -1;
 	}
 
+	/*
 	int flags;
 	if ((flags = fcntl(csockfd, F_GETFL)) < 0)
 	{
@@ -184,8 +185,40 @@ int accept_connd(struct sockaddr *addr)
 		printerr();
 		return -1;	
 	}
+	*/
 
 	printf("- new conn accepted, sockfd = %d.\n", csockfd);
+
+	struct sockaddr_in *acceptaddr4 = (struct sockaddr_in *)addr;
+	char acceptaddr4ip[16];
+	inet_ntop(AF_INET, &acceptaddr4->sin_addr, acceptaddr4ip, (socklen_t)sizeof(acceptaddr4ip));
+	printf("- new conn from %s:%d\n", acceptaddr4ip, ntohs(acceptaddr4->sin_port));
+
+// 
+/*
+	struct sockaddr *localaddr;
+	socklen_t llen = (socklen_t)sizeof(*localaddr);
+	getsockname(csockfd, localaddr, &llen);
+	struct sockaddr_in *localaddr4 = (struct sockaddr_in *)localaddr;
+	char localaddr4ip[16];
+	inet_ntop(AF_INET, &localaddr4->sin_addr, localaddr4ip, (socklen_t)sizeof(localaddr4ip));
+	printf("- new conn 's local addr is %s:%d\n", localaddr4ip, ntohs(localaddr4->sin_port));
+
+	struct sockaddr *peeraddr;
+	socklen_t plen = (socklen_t)sizeof(*peeraddr);
+	if (getpeername(csockfd, peeraddr, &plen) < 0)
+	{
+		printf("! accept_connd()-getpeername() failed.\n");
+		printerr();
+	} 
+	else
+	{
+		struct sockaddr_in *peeraddr4 = (struct sockaddr_in *)peeraddr;
+		char peeraddr4ip[16];
+		inet_ntop(AF_INET, &peeraddr4->sin_addr, peeraddr4ip, (socklen_t)sizeof(peeraddr4ip));
+		printf("- new conn 's peer addr is %s:%d\n", peeraddr4ip, ntohs(peeraddr4->sin_port));
+	}
+*/
 
 	return csockfd;
 }
@@ -240,7 +273,6 @@ int del_from_epoll(int sockfd)
 
 int epoll_event_fire(struct epoll_event event)
 {
-	//printf("- event type = %d\n", event.events);
 	if (event.events & EPOLLIN)
 		printf("- EPOLLIN\n");
 	if (event.events & EPOLLPRI)
@@ -274,6 +306,9 @@ int epoll_event_fire(struct epoll_event event)
 		int sockfd = event.data.fd;
 		if (event.events & EPOLLIN)
 		{
+
+
+			/*
 			struct tcp_info info;
 			int len = sizeof(info);
 			if (getsockopt(sockfd, IPPROTO_TCP, TCP_INFO, &info, (socklen_t *)&len) < 0)
@@ -283,7 +318,12 @@ int epoll_event_fire(struct epoll_event event)
 				return -1;
 			}
 
-			if (info.tcpi_state != TCP_ESTABLISHED)
+			if (info.tcpi_state == TCP_ESTABLISHED)
+			{
+				char *msg = "ack";
+				write(sockfd, &msg, sizeof(msg));
+			}
+			else if (info.tcpi_state == TCP_CLOSE_WAIT)
 			{
 				del_from_epoll(sockfd);
 				del_map_conn(sockfd);
@@ -291,13 +331,7 @@ int epoll_event_fire(struct epoll_event event)
 				printf("- sockfd %d closed.\n", sockfd);
 				return 0;
 			}
-
-			// char *buf = (char *)calloc(2, sizeof(char));
-			// if (read(sockfd, buf, 2) <= 0)
-			// {
-			// 	printf("- read null.\n");
-			// 	printerr();
-			// }
+			*/
 		}
 	}
 
