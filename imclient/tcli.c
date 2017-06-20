@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 	memset(&sockaddr, 0, (size_t)sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_port = htons(SERVER_PORT);
-	inet_pton(AF_INET, "192.168.1.104", &sockaddr.sin_addr);
+	inet_pton(AF_INET, "192.168.1.103", &sockaddr.sin_addr);
 	
 	if (connect(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
 	{
@@ -73,16 +73,17 @@ int main(int argc, char* argv[])
 	getsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &sndbufsize, (socklen_t *)&sbflen);
 	printf("- snd buf size = %d\n", sndbufsize);
 
-/*
+
 	char input;
 	while (1)
 	{
-		scanf("%c", &input);
-		if (input == 'q')
-			break;
+		char msg[161];
+		fgets(msg, 161, stdin);
+		// replace '\n' with '\0'
+		char *tmp = strchr(msg, '\n');
+		if (tmp) *tmp = '\0';
 
-		char *msg = "hello world";
-		if (write(sockfd, &msg, sizeof(msg)))
+		if (send(sockfd, &msg, sizeof(msg), 0))
 		{
 			printf("- send %s\n", msg);
 		}
@@ -91,7 +92,8 @@ int main(int argc, char* argv[])
 			printf("! send failed.\n");
 		}
 	} 
-*/
+
+/*
 int i = 0;
 for (i = 0; i < 1; ++i)
 {
@@ -116,7 +118,7 @@ for (i = 0; i < 1; ++i)
 
 	//sleep(3);
 }
-	
+*/
 
 	close(sockfd);
 	//shutdown(sockfd, 0);

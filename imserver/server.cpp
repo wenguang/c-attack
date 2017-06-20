@@ -13,7 +13,6 @@
 #include <map>
 #include <iterator>
 #include <arpa/inet.h>
-//#include <linux/tcp.h>
 #include <netinet/tcp.h>
 
 #include "errstr.h"
@@ -170,7 +169,7 @@ int accept_connd(struct sockaddr *addr)
 		return -1;
 	}
 
-	/*
+
 	int flags;
 	if ((flags = fcntl(csockfd, F_GETFL)) < 0)
 	{
@@ -185,7 +184,7 @@ int accept_connd(struct sockaddr *addr)
 		printerr();
 		return -1;	
 	}
-	*/
+
 
 	printf("- new conn accepted, sockfd = %d.\n", csockfd);
 
@@ -194,7 +193,7 @@ int accept_connd(struct sockaddr *addr)
 	inet_ntop(AF_INET, &acceptaddr4->sin_addr, acceptaddr4ip, (socklen_t)sizeof(acceptaddr4ip));
 	printf("- new conn from %s:%d\n", acceptaddr4ip, ntohs(acceptaddr4->sin_port));
 
-// 
+// The address getting from accept func is not the same one getting from getpeername func.
 /*
 	struct sockaddr *localaddr;
 	socklen_t llen = (socklen_t)sizeof(*localaddr);
@@ -271,6 +270,43 @@ int del_from_epoll(int sockfd)
     return 0;
 }
 
+void on_close(int sockfd)
+{
+	del_from_epoll(sockfd);
+	del_map_conn(sockfd);
+	close(sockfd);
+	printf("- sockfd %d closed.\n", sockfd);
+}
+
+void on_recv(int sockfd)
+{
+	char buf[4096];
+	ssize_t rn = recv(sockfd, (void *)&buf, (size_t)sizeof(buf), 0);
+
+	if (rn > 0)
+	{
+		printf("- recv %d bytes\n", rn);
+		//char *msg = (char *)calloc(rn, sizeof(char));
+		//memcpy((void *)msg, (void *)buf, rn);
+		printf("- recv msg = %s\n", buf);
+	}
+	else if (rn == 0)
+	{
+		on_close(sockfd);
+	}
+	else if (rn < 0)
+	{
+		if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+			// non-block recv
+		}	
+		else
+		{
+			printerr();
+		}
+	}
+}
+
 int epoll_event_fire(struct epoll_event event)
 {
 	if (event.events & EPOLLIN)
@@ -306,8 +342,10 @@ int epoll_event_fire(struct epoll_event event)
 		int sockfd = event.data.fd;
 		if (event.events & EPOLLIN)
 		{
+			on_recv(sockfd);
+			return 0;
 
-
+			// It is not a good way using tcp_info to check peer closing state.
 			/*
 			struct tcp_info info;
 			int len = sizeof(info);
@@ -325,13 +363,19 @@ int epoll_event_fire(struct epoll_event event)
 			}
 			else if (info.tcpi_state == TCP_CLOSE_WAIT)
 			{
-				del_from_epoll(sockfd);
-				del_map_conn(sockfd);
-				close(sockfd);
-				printf("- sockfd %d closed.\n", sockfd);
+				on_close(sockfd);
 				return 0;
 			}
 			*/
+		}
+		else if (event.events & EPOLLOUT)
+		{
+
+		}
+		else if (event.events & EPOLLERR || event.events & EPOLLHUP)
+		{
+			on_close(sockfd);
+			return 0;	
 		}
 	}
 
