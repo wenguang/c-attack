@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 	memset(&sockaddr, 0, (size_t)sizeof(sockaddr));
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_port = htons(SERVER_PORT);
-	inet_pton(AF_INET, "192.168.1.103", &sockaddr.sin_addr);
+	inet_pton(AF_INET, "192.168.1.101", &sockaddr.sin_addr);
 	
 	if (connect(sockfd, (struct sockaddr *)&sockaddr, (socklen_t)sizeof(sockaddr)) < 0)
 	{
