@@ -1,0 +1,11 @@
+{
+    "semantic": {
+        "slots":    {
+            "name": "张三"
+        }
+    },
+    "rc":   0,
+    "operation":    "CALL",
+    "service":  "telephone",
+    "text": "打电话给张三"
+}
