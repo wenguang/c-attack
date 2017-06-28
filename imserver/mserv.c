@@ -79,6 +79,8 @@ int servsock(int port)
 	memset(&addr4, 0, (size_t)sizeof(addr4));
 	getifaddr(&addr4);
 	addr4.sin_port = htons(port);
+	//inet_pton(AF_INET, "113.65.129.49", &addr4.sin_addr);
+	//addr4.sin_family = AF_INET;
 
 	if (bind(psockfd, (struct sockaddr *)&addr4, (socklen_t)sizeof(addr4)) < 0)
 	{
