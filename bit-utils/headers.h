@@ -4,3 +4,6 @@
 #include <string.h>
 #include <map>
 #include <string>
+
+typedef unsigned short 	ushort;
+typedef unsigned int 	uint;

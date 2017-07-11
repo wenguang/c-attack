@@ -1,3 +1,5 @@
+#include "SimpleBuffer.h"
+
 CSimpleBuffer::CSimpleBuffer()
 {
 	m_buffer = NULL;
@@ -17,18 +19,18 @@ CSimpleBuffer::~CSimpleBuffer()
 	}
 }
 
-void CSimpleBuffer::Extend(uint32_t len)
+void CSimpleBuffer::Extend(uint len)
 {
 	m_alloc_size = m_write_offset + len;
 	m_alloc_size += m_alloc_size >> 2;	// increase by 1/4 allocate size
-	uchar_t* new_buf = (uchar_t*)realloc(m_buffer, m_alloc_size);
+	char* new_buf = (char*)realloc(m_buffer, m_alloc_size);
     if(new_buf != NULL)
     {
     	m_buffer = new_buf;
     }
 }
 
-uint32_t CSimpleBuffer::Write(void* buf, uint32_t len)
+uint CSimpleBuffer::Write(void* buf, uint len)
 {
 	if (m_write_offset + len > m_alloc_size)
 	{
@@ -45,7 +47,7 @@ uint32_t CSimpleBuffer::Write(void* buf, uint32_t len)
 	return len;
 }
 
-uint32_t CSimpleBuffer::Read(void* buf, uint32_t len)
+uint CSimpleBuffer::Read(void* buf, uint len)
 {
 	if (len > m_write_offset)
 		len = m_write_offset;
